@@ -38,11 +38,21 @@ class UploadDocumentView(APIView):
         )
 
 
+import traceback
+
 class ProcessDocumentView(APIView):
     def post(self, request):
         try:
-            main_doc = Document.objects.filter(doc_type="MAIN").first()
-            source_docs = Document.objects.filter(doc_type="SOURCE")
+            main_id = request.data.get('main_id')
+            source_ids = request.data.get('source_ids')
+
+            if main_id and source_ids:
+                main_doc = Document.objects.filter(id=main_id).first()
+                source_docs = Document.objects.filter(id__in=source_ids)
+            else:
+                # Fallback to the most recently uploaded files if IDs are not provided
+                main_doc = Document.objects.filter(doc_type="MAIN").last()
+                source_docs = Document.objects.filter(doc_type="SOURCE").order_by('-uploaded_at')[:6] # Taking last 6
 
             if not main_doc or not source_docs.exists():
                 return Response(
@@ -65,6 +75,8 @@ class ProcessDocumentView(APIView):
             )
 
         except Exception as e:
+            error_trace = traceback.format_exc()
+            print(f"❌ INTERNAL SERVER ERROR:\n{error_trace}")
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

@@ -14,12 +14,21 @@ def parse_pdf(file_path):
 
 def parse_docx(file_path):
     doc = DocxDocument(file_path)
-    text = ""
+    text = []
 
+    # Extract paragraphs
     for para in doc.paragraphs:
-        text += para.text + "\n"
+        if para.text.strip():
+            text.append(para.text)
 
-    return text
+    # Extract tables
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                if cell.text.strip():
+                    text.append(cell.text)
+
+    return "\n".join(text)
 
 
 def parse_document(file_path):

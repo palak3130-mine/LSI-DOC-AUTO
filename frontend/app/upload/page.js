@@ -37,17 +37,20 @@ export default function UploadPage() {
       setMessage("");
 
       // Upload MAIN
-      await uploadFile(mainFile, "MAIN");
+      const mainRes = await uploadFile(mainFile, "MAIN");
+      const mainId = mainRes.data.id;
 
       // Upload MULTIPLE SOURCE FILES
+      const sourceIds = [];
       for (let i = 0; i < sourceFiles.length; i++) {
-        await uploadFile(sourceFiles[i], "SOURCE");
+        const res = await uploadFile(sourceFiles[i], "SOURCE");
+        sourceIds.push(res.data.id);
       }
 
-      // Process
+      // Process with IDs
       const res = await axios.post(
         "http://127.0.0.1:8000/api/documents/process/",
-        {}
+        { main_id: mainId, source_ids: sourceIds }
       );
 
       setMessage(res.data.file);
